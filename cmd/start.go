@@ -1,13 +1,17 @@
 package cmd
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"github.com/NodeFactoryIo/vedran/internal/loadbalancer"
 	"github.com/NodeFactoryIo/vedran/pkg/logger"
 	"github.com/NodeFactoryIo/vedran/pkg/util/random"
+	tunnel "github.com/mmatczuk/go-http-tunnel"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"io/ioutil"
 )
 
 var (
@@ -119,6 +123,30 @@ func init() {
 }
 
 func startCommand(_ *cobra.Command, _ []string) {
+
+	// http tunnel
+	tlsConfig, err := tlsConfig("server.crt", "server.key", "")
+	if err == nil {
+		// create http tunnel
+		server, err := tunnel.NewServer(&tunnel.ServerConfig{
+			Addr:          ":5223",
+			AutoSubscribe: false,
+			TLSConfig: tlsConfig,
+			SNIAddr:       "",
+		})
+
+		// starts http tunnel in new goroutine
+		if err == nil {
+			log.Debug("Starting http tunel")
+			go server.Start()
+		} else {
+			log.Error(err)
+		}
+	} else {
+		log.Error(err)
+	}
+
+
 	loadbalancer.StartLoadBalancerServer(loadbalancer.Properties{
 		AuthSecret: authSecret,
 		Name:       name,
@@ -128,4 +156,40 @@ func startCommand(_ *cobra.Command, _ []string) {
 		Selection:  selection,
 		Port:       port,
 	})
+}
+
+func tlsConfig(tlsCrt string, tlsKey string, rootCA string) (*tls.Config, error) {
+	// load certs
+	cert, err := tls.LoadX509KeyPair(tlsCrt, tlsKey)
+	if err != nil {
+		return nil, err
+	}
+
+	// load root CA for client authentication
+	clientAuth := tls.RequireAnyClientCert
+	var roots *x509.CertPool
+	if rootCA != "" {
+		roots = x509.NewCertPool()
+		rootPEM, err := ioutil.ReadFile(rootCA)
+		if err != nil {
+			return nil, err
+		}
+		if ok := roots.AppendCertsFromPEM(rootPEM); !ok {
+			return nil, err
+		}
+		clientAuth = tls.RequireAndVerifyClientCert
+	}
+
+	return &tls.Config{
+		Certificates:           []tls.Certificate{cert},
+		ClientAuth:             clientAuth,
+		ClientCAs:              roots,
+		SessionTicketsDisabled: true,
+		MinVersion:             tls.VersionTLS12,
+		CipherSuites: []uint16{
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256},
+		PreferServerCipherSuites: true,
+		NextProtos:               []string{"h2"},
+	}, nil
 }
