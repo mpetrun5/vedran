@@ -3,6 +3,7 @@ package controllers
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"github.com/NodeFactoryIo/vedran/internal/auth"
 	"github.com/NodeFactoryIo/vedran/internal/models"
@@ -17,8 +18,11 @@ import (
 func TestApiController_PingHandler(t *testing.T) {
 	tests := []struct {
 		name string
+		onPingSaveReturn interface{}
+		expectedStatus int
 	}{
-		{name: "Valid ping request"},
+		{name: "Valid ping request", onPingSaveReturn: nil, expectedStatus: http.StatusOK},
+		{name: "Valid ping request", onPingSaveReturn: errors.New("DB error"), expectedStatus: http.StatusInternalServerError},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -30,7 +34,7 @@ func TestApiController_PingHandler(t *testing.T) {
 			pingRepoMock.On("Save", &models.Ping{
 				NodeId:    "1",
 				Timestamp: timestamp,
-			}).Return(nil)
+			}).Return(test.onPingSaveReturn)
 			apiController := NewApiController(false, &nodeRepoMock, &pingRepoMock, &metricsRepoMock)
 			handler := http.HandlerFunc(apiController.PingHandler)
 
@@ -48,7 +52,7 @@ func TestApiController_PingHandler(t *testing.T) {
 			handler.ServeHTTP(rr, req)
 
 			// asserts
-			assert.Equal(t, rr.Code, http.StatusOK, fmt.Sprintf("Response status code should be %d", http.StatusOK))
+			assert.Equal(t, test.expectedStatus, rr.Code, fmt.Sprintf("Response status code should be %d", http.StatusOK))
 			assert.True(t, pingRepoMock.AssertNumberOfCalls(t, "Save", 1))
 		})
 	}
