@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.2.2]((https://github.com/NodeFactoryIo/vedran/tree/v0.2.2))
+
+[Full Changelog](https://github.com/NodeFactoryIo/vedran/compare/v.0.1.1...v.0.2.0)
+
+### Added
+
+### Fix
+
+### Changed
+
 ## [v0.2.1]((https://github.com/NodeFactoryIo/vedran/tree/v0.2.1))
 
 [Full Changelog](https://github.com/NodeFactoryIo/vedran/compare/v.0.1.1...v.0.2.0)
