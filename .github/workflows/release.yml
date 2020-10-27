@@ -82,7 +82,7 @@ jobs:
       - name: Archive Darwin 64
         uses: thedoctor0/zip-release@master
         with:
-          filename: 'vedran-darwin-64.zip'
+          filename: 'vedran-darwin-amd64.zip'
           path: 'build/darwin-amd64/'
 
       - name: Archive Windows
