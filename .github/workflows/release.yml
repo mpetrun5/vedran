@@ -120,7 +120,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./vedran-windows-amd64.zip
+          asset_path: ./vedran-windows.zip
           asset_name: vedran-windows
           asset_content_type: application/x-binary
 
