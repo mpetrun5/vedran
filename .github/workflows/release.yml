@@ -98,7 +98,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./vedran-linux-amd64.zip
+          asset_path: ./build/linux-amd64/vedran-linux-amd64.zip
           asset_name: vedran-linux-amd64
           asset_content_type: application/x-binary
 
@@ -109,7 +109,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./vedran-linux-arm.zip
+          asset_path: ./build/linux-arm/vedran-linux-arm.zip
           asset_name: vedran-linux-arm
           asset_content_type: application/x-binary
 
@@ -120,7 +120,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./vedran-windows.zip
+          asset_path: ./build/windows/vedran-windows.zip
           asset_name: vedran-windows
           asset_content_type: application/x-binary
 
@@ -131,7 +131,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./vedran-darwin-amd64.zip
+          asset_path: ./build/darwin/amd64/vedran-darwin-amd64.zip
           asset_name: vedran-macos
           asset_content_type: application/x-binary
 
