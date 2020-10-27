@@ -71,25 +71,25 @@ jobs:
         uses: thedoctor0/zip-release@master
         with:
           filename: 'vedran-linux-amd64.zip'
-          path: 'build/linux-amd64/vedran'
+          directory: 'build/linux-amd64/'
 
       - name: Archive Linux Arm
         uses: thedoctor0/zip-release@master
         with:
           filename: 'vedran-linux-arm.zip'
-          path: 'build/linux-arm/vedran'
+          directory: 'build/linux-arm/'
 
       - name: Archive Darwin 64
         uses: thedoctor0/zip-release@master
         with:
           filename: 'vedran-darwin-amd64.zip'
-          path: 'build/darwin-amd64/vedran'
+          directory: 'build/darwin-amd64/'
 
       - name: Archive Windows
         uses: thedoctor0/zip-release@master
         with:
           filename: 'vedran-windows.zip'
-          path: 'build/windows/vedran.exe'
+          directory: 'build/windows/'
 
       - name: Upload Linux amd64
         id: vedran-linux-amd64
