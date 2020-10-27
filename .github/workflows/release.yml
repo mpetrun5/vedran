@@ -131,7 +131,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./build/darwin/amd64/vedran-darwin-amd64.zip
+          asset_path: ./build/darwin-amd64/vedran-darwin-amd64.zip
           asset_name: vedran-macos
           asset_content_type: application/x-binary
 
