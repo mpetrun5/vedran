@@ -57,7 +57,7 @@ jobs:
           path: ./CHANGELOG.md
 
       - name: Sign Windows Binary
-        uses: jonfriesen/windows-signer-action@v0.1.1
+        uses: jonfriesen/windows-signer-action@v0.0.1
         env:
           NAME: SignerName
           DOMAIN: https://nodefactory.io/
