@@ -56,6 +56,15 @@ jobs:
           version: ${{ needs.tag.outputs.tag }}
           path: ./CHANGELOG.md
 
+      - name: Sign Windows Binary
+        uses: jonfriesen/windows-signer-action@v1.0.0
+        env:
+          NAME: SignerName
+          DOMAIN: https://nodefactory.io/
+          BINARY: build/windows/vedran.exe
+          WINDOWS_CERT: ${{ secrets.WINDOWS_CERT }}
+          WINDOWS_KEY: ${{ secrets.WINDOWS_KEY }}
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
