@@ -58,6 +58,7 @@ jobs:
 
       - name: Sign Windows Binary
         uses: nodefactoryio/windows-codesign-action@master
+        with:
           binaryPath: "build/windows/vedran.exe"
           verify: "true"
           keystore: ${{ secrets.KEY }}
