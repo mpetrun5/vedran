@@ -6,16 +6,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+	"time"
+
 	"github.com/NodeFactoryIo/vedran/internal/auth"
 	"github.com/NodeFactoryIo/vedran/internal/models"
 	"github.com/NodeFactoryIo/vedran/internal/repositories"
 	mocks "github.com/NodeFactoryIo/vedran/mocks/repositories"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"net/http"
-	"net/http/httptest"
-	"testing"
-	"time"
 )
 
 func TestApiController_SaveMetricsHandler(t *testing.T) {
@@ -31,6 +32,8 @@ func TestApiController_SaveMetricsHandler(t *testing.T) {
 		// NodeRepo.AddNodeToActive
 		nodeRepoAddNodeToActiveError      error
 		nodeRepoAddNodeToActiveNumOfCalls int
+		// NodeRepo.IsNodeActive
+		nodeRepoIsNodeActiveReturn bool
 		// MetricsRepo.FindByID
 		metricsRepoFindByIDError      error
 		metricsRepoFindByIDReturn     *models.Metrics
@@ -55,11 +58,13 @@ func TestApiController_SaveMetricsHandler(t *testing.T) {
 			httpStatus: http.StatusOK,
 			// NodeRepo.FindByID
 			nodeRepoIsNodeOnCooldownReturns: false,
-			nodeRepoIsNodeOnCooldownError: nil,
-			nodeRepoIsNodeOnNumOfCalls:    1,
+			nodeRepoIsNodeOnCooldownError:   nil,
+			nodeRepoIsNodeOnNumOfCalls:      1,
 			// NodeRepo.AddNodeToActive
 			nodeRepoAddNodeToActiveError:      nil,
 			nodeRepoAddNodeToActiveNumOfCalls: 1,
+			// NodeRepo.IsNodeActive
+			nodeRepoIsNodeActiveReturn: false,
 			// MetricsRepo.FindByID
 			metricsRepoFindByIDReturn: &models.Metrics{
 				NodeId:                "1",
@@ -82,6 +87,37 @@ func TestApiController_SaveMetricsHandler(t *testing.T) {
 			metricsRepoSaveNumOfCalls: 1,
 		},
 		{
+			name: "Valid metrics save request and node should not be added to active nodes as it already is in active",
+			metricsRequest: MetricsRequest{
+				PeerCount:             0,
+				BestBlockHeight:       1000,
+				FinalizedBlockHeight:  995,
+				ReadyTransactionCount: 0,
+			},
+			nodeId:     "1",
+			httpStatus: http.StatusOK,
+			// NodeRepo.FindByID
+			nodeRepoIsNodeOnCooldownReturns: false,
+			nodeRepoIsNodeOnCooldownError:   nil,
+			nodeRepoIsNodeOnNumOfCalls:      0,
+			// NodeRepo.AddNodeToActive
+			nodeRepoAddNodeToActiveError:      nil,
+			nodeRepoAddNodeToActiveNumOfCalls: 0,
+			// NodeRepo.IsNodeActive
+			nodeRepoIsNodeActiveReturn: true,
+			// MetricsRepo.FindByID
+			metricsRepoFindByIDReturn:     nil,
+			metricsRepoFindByIDError:      nil,
+			metricsRepoFindByIDNumOfCalls: 0,
+			// MetricsRepo.GetLatestBlockMetrics
+			metricsRepoGetLatestBlockMetricsReturn:     nil,
+			metricsRepoGetLatestBlockMetricsError:      nil,
+			metricsRepoGetLatestBlockMetricsNumOfCalls: 0,
+			// MetricsRepo.Save
+			metricsRepoSaveError:      nil,
+			metricsRepoSaveNumOfCalls: 1,
+		},
+		{
 			name: "Valid metrics save request and node should not be added to active nodes as it is penalized",
 			metricsRequest: MetricsRequest{
 				PeerCount:             10,
@@ -93,11 +129,13 @@ func TestApiController_SaveMetricsHandler(t *testing.T) {
 			httpStatus: http.StatusOK,
 			// NodeRepo.FindByID
 			nodeRepoIsNodeOnCooldownReturns: true,
-			nodeRepoIsNodeOnCooldownError:      nil,
-			nodeRepoIsNodeOnNumOfCalls: 1,
+			nodeRepoIsNodeOnCooldownError:   nil,
+			nodeRepoIsNodeOnNumOfCalls:      1,
 			// NodeRepo.AddNodeToActive
 			nodeRepoAddNodeToActiveError:      nil,
 			nodeRepoAddNodeToActiveNumOfCalls: 0,
+			// NodeRepo.IsNodeActive
+			nodeRepoIsNodeActiveReturn: false,
 			// MetricsRepo.FindByID
 			metricsRepoFindByIDReturn:     nil,
 			metricsRepoFindByIDError:      nil,
@@ -122,11 +160,13 @@ func TestApiController_SaveMetricsHandler(t *testing.T) {
 			httpStatus: http.StatusOK,
 			// NodeRepo.FindByID
 			nodeRepoIsNodeOnCooldownReturns: false,
-			nodeRepoIsNodeOnCooldownError:      nil,
-			nodeRepoIsNodeOnNumOfCalls: 1,
+			nodeRepoIsNodeOnCooldownError:   nil,
+			nodeRepoIsNodeOnNumOfCalls:      1,
 			// NodeRepo.AddNodeToActive
 			nodeRepoAddNodeToActiveError:      nil,
 			nodeRepoAddNodeToActiveNumOfCalls: 0,
+			// NodeRepo.IsNodeActive
+			nodeRepoIsNodeActiveReturn: false,
 			// MetricsRepo.FindByID
 			metricsRepoFindByIDReturn: &models.Metrics{
 				NodeId:                "1",
@@ -183,6 +223,9 @@ func TestApiController_SaveMetricsHandler(t *testing.T) {
 			nodeRepoMock.On("AddNodeToActive", test.nodeId).Return(
 				test.nodeRepoAddNodeToActiveError,
 			)
+			nodeRepoMock.On("IsNodeActive", test.nodeId).Return(
+				test.nodeRepoIsNodeActiveReturn,
+			)
 
 			metricsRepoMock := mocks.MetricsRepository{}
 			metricsRepoMock.On("FindByID", test.nodeId).Return(
@@ -194,13 +237,15 @@ func TestApiController_SaveMetricsHandler(t *testing.T) {
 			metricsRepoMock.On("Save", mock.Anything).Return(
 				test.metricsRepoSaveError,
 			)
+			downtimeRepoMock := mocks.DowntimeRepository{}
 
 			apiController := NewApiController(false, repositories.Repos{
-				NodeRepo:    &nodeRepoMock,
-				PingRepo:    &pingRepoMock,
-				MetricsRepo: &metricsRepoMock,
-				RecordRepo:  &recordRepoMock,
-			}, nil)
+				NodeRepo:     &nodeRepoMock,
+				PingRepo:     &pingRepoMock,
+				MetricsRepo:  &metricsRepoMock,
+				RecordRepo:   &recordRepoMock,
+				DowntimeRepo: &downtimeRepoMock,
+			}, nil, "")
 
 			handler := http.HandlerFunc(apiController.SaveMetricsHandler)
 

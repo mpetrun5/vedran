@@ -14,7 +14,7 @@ dep:
 	go get ./...
 
 test:
-	go test ./...
+	go test ./... -cover
 
 lint:
 	golangci-lint run
@@ -38,9 +38,9 @@ arch = $(word 2, $(temp))
 
 $(PLATFORMS):
 	@if [ "$(os)" = "windows" ]; then \
-			GOOS=$(os) GOARCH=$(arch) go build -o 'vedran-$(os)-$(arch).exe'; \
+			GOOS=$(os) GOARCH=$(arch) go build -o 'build/windows/vedran.exe'; \
 	else \
-			GOOS=$(os) GOARCH=$(arch) go build -o 'vedran-$(os)-$(arch)'; \
+			GOOS=$(os) GOARCH=$(arch) go build -o 'build/${os}-${arch}/vedran'; \
 	fi
 
 buildAll: $(PLATFORMS)
