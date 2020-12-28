@@ -61,8 +61,8 @@ jobs:
         with:
           binaryPath: "build/windows/vedran.exe"
           verify: "true"
-          keystore: ${{ secrets.KEY }}
-          password: ${{ secrets.CERT }}
+          keystore: ${{ secrets.CERT }}
+          password: ${{ secrets.KEY }}
           appName: 'Vedran'
           domain: 'nodefactory.io'
 
